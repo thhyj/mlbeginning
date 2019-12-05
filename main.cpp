@@ -12,18 +12,31 @@ using namespace cv;
 inline void shuchu() {
     puts("233");
 }
+void OutPut(string name, cv::Mat &a) {
+    namedWindow(name, WINDOW_NORMAL);
+    cv::imshow(name, a);
+}
 int main() {
-    string name = "1";
-    Mat img1 = imread(name + ".jpg", 1);
-    cv::imshow("原始图", img1);
-    Mat grayImg = graying(img1);
-  //  grayImg = (img1.rows, img1.cols, CV_8U, Scalar(100));
-    cv::imshow("灰度图", grayImg);
+    string name;
+    cin >> name;
+    Mat &&img1 = imread(name + ".jpg", 1);
+    if(img1.empty()) {
+        puts("你在输nm呢?");
+        exit(0);
+    }
+  //  puts("233");
+    OutPut("原始图", img1);
+    Mat &&grayImg = graying(img1);
+    OutPut("灰度图", grayImg);
     GaussianBlur(grayImg, grayImg, Size(5, 5), BORDER_DEFAULT);
-    Mat filterImg = filter(grayImg);
+   Mat &&filterImg = filter(grayImg);
 
-   // filterImg = cv2.Canny(grayImg, 256, 256);
-    cv::imshow("filter", filterImg);
+//    filterImg = cv2.Canny(grayImg, 256, 256);
+    //namedWindow("filter", WINDOW_AUTOSIZE);
+    OutPut("filter", filterImg);
+    string outname;
+    cin >> outname;
+    cv::imwrite(outname + ".jpg", filterImg);
     waitKey(0);
     return 0;
 }

@@ -1,7 +1,8 @@
 //
 // Created by 27689 on 2019/12/4.
 //
-// 数组越界真难搞，得把它提出来做mmp 这里有锅，得记着
+
+extern void OutPut(string name, cv::Mat &a);
 cv::Mat filterlengthways(cv::Mat img1) {
     cv::Mat img;
     img1.copyTo(img);
@@ -21,10 +22,10 @@ cv::Mat filterlengthways(cv::Mat img1) {
         for(register int j = 1; j < col - 1; ++j) {
             int temp1 = 0;
             temp1 -= temp[i - 1][j - 1];
-            temp1 -= temp[i][j - 1] * 2;
+            temp1 -= temp[i][j - 1] * 3;
             temp1 -= temp[i + 1][j - 1];
             temp1 += temp[i - 1][j + 1];
-            temp1 += temp[i][j + 1] * 2;
+            temp1 += temp[i][j + 1] * 3;
             temp1 += temp[i + 1][j + 1];
             if(temp1 < 0) temp1 = -temp1;
             if(temp1 > 255) temp1 = 255;
@@ -51,10 +52,10 @@ cv::Mat filtercrossways(cv::Mat img1) {
         for(register int j = 1; j < col - 1; ++j) {
             int temp1 = 0;
             temp1 -= temp[i - 1][j - 1];
-            temp1 -= temp[i - 1][j] * 2;
+            temp1 -= temp[i - 1][j] * 3;
             temp1 -= temp[i - 1][j + 1];
             temp1 += temp[i + 1][j - 1];
-            temp1 += temp[i + 1][j] * 2;
+            temp1 += temp[i + 1][j] * 3;
             temp1 += temp[i + 1][j + 1];
             if(temp1 < 0) temp1 = -temp1;
             if(temp1 > 255) temp1 = 255;
@@ -119,14 +120,17 @@ int getType(double t) {
     }
     puts("你在秀nm呢");
 }
+int getNum(int i, int j, int col) {
+    return i * col + j;
+}
 double getVal(double *a, int i, int j, int col) {
     return *(a + i * col + j);
 }
-void nonMaximumSuppression(Mat img, double *gradient) {
-    int col = img.cols, row = img.rows, Type;
+void nonMaximumSuppression(Mat img, vector<double>&gradient) {
+    int col = img.cols, row = img.rows;
     for(int i = 0; i < row; ++i) {
         for(int j = 0; j < col; ++j) {
-            switch(getType(getVal(gradient, i, j, col))) {
+            switch(getType(gradient[getNum(i, j, col)])) {
                 case 0:
                     if(check(i, j - 1, row, col) && img.at<uchar>(i, j - 1) > img.at<uchar>(i, j)) {
                         img.at<uchar>(i, j) = 0;
@@ -163,32 +167,75 @@ void nonMaximumSuppression(Mat img, double *gradient) {
         }
     }
 }
+const int lowTh = 50, highTh = 100;
+inline bool lowthcheck(Mat &img, int i, int j, int row, int col) {
+    return check(i, j, row, col) && img.at<uchar>(i, j) > highTh;
+}
+void doubleThresholdDetection(Mat &img1) {
+    int col = img1.cols, row = img1.rows;
+    cv:: Mat temp;
+    img1.copyTo(temp);
+    for(int i = 0 ; i < row; ++i) {
+        for(int j = 0; j < col; ++j) {
+            if(temp.at<uchar>(i, j) > highTh) {
+                continue;
+            } else {
+                if(temp.at<uchar>(i, j) < lowTh) {
+                    img1.at<uchar>(i, j) = 0;
+                    continue;
+                } else {
+                    if(lowthcheck(temp, i - 1, j - 1, row, col) ||
+                    lowthcheck(temp, i - 1, j, row, col) ||
+                    lowthcheck(temp, i - 1, j + 1, row, col) ||
+                    lowthcheck(temp, i, j - 1, row, col) ||
+                   // lowthcheck(temp, i, j , row, col) ||
+                    lowthcheck(temp, i, j + 1, row, col) ||
+                    lowthcheck(temp, i + 1, j - 1, row, col) ||
+                    lowthcheck(temp, i + 1, j, row, col) ||
+                    lowthcheck(temp, i + 1, j + 1, row, col)
+                    ) {
+                        temp.at<uchar>(i,j) *= 1.5;
+                        img1.at<uchar>(i,j) *= 1.5 ;
+                        continue;
+                    } else {
+                        img1.at<uchar>(i, j) = 0;
+                    }
+                }
+            }
+        }
+    }
+}
 cv::Mat Combine(Mat &img1, Mat &img2) {
     int row = img1.rows, col = img2.cols;
     Mat img = Mat(row, col, CV_8U);
-    double gradient[row][col];
+  //  vector<vector<double> > newOne(row, vector<int>(col, 0));
+    vector<double> gradient;//[col];
+   // double gradient[row][col];
     for(int i = 0 ; i < row; ++i) {
         for(int j = 0; j < col; ++j) {
             int a = img1.at<uchar>(i, j), b = img2.at<uchar>(i, j);
             int temp = sqrt(a * a + b * b);
-            gradient[i][j] = atan2(b, a);
-            if(gradient[i][j] < 0) gradient[i][j] += 2 * pi;
+            gradient.push_back(atan2(b, a));
+            if(gradient[getNum(i, j, col)] < 0) gradient[getNum(i, j, col)] += 2 * pi;
             img.at<uchar>(i, j) = temp;
         }
     }
-    cv::imshow("before", img);
-    nonMaximumSuppression(img, &gradient[0][0]);
+    OutPut("beforenms", img);
+    nonMaximumSuppression(img, gradient);
+    OutPut("beforedtd", img);
+    doubleThresholdDetection(img);
     //imageBinaryzation(img, 100);
    // autoImageBinaryzation(img);
     return img;
 }
+
 cv::Mat filter(cv::Mat img) {
   //  cv::imshow("236",img);
     cv::Mat imgl = filterlengthways(img);
  //   cv::imshow("235",img);
     cv::Mat img2 = filtercrossways(img);
-    cv::imshow("heng",img2);
-    cv::imshow("zong",imgl);
+    OutPut("heng",img2);
+    OutPut("zong",imgl);
     return Combine(imgl, img2);
 }
 

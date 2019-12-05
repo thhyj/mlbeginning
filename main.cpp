@@ -13,7 +13,7 @@ inline void shuchu() {
     puts("233");
 }
 int main() {
-    string name = "soccer";
+    string name = "1";
     Mat img1 = imread(name + ".jpg", 1);
     cv::imshow("原始图", img1);
     Mat grayImg = graying(img1);

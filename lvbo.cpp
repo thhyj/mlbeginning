@@ -71,7 +71,7 @@ void imageBinaryzation(Mat img, int thresholdVal = 0) {
         (*it1) > thresholdVal ? (*it1) = 255 : (*it1) = 0;
     }
 }
-bool check(int &i, int &j, int &row, int &col) {
+bool check(int i, int j, int &row, int &col) {
     return ((i >= 0) && (i < row) && (j >= 0) && (j < col));
 }
 void add(Mat &img, int i, int j, int &row, int &col, int &cnt, int &all) {
@@ -103,25 +103,89 @@ void autoImageBinaryzation(Mat img) {
         }
     }
 }
+const double pi = acos(-1);
+const double zone[8] = {atan2(1,3), atan2(3,1), atan2(3, -1), atan2(1, -3),
+                        2 * pi + atan2(-1, -3), 2 * pi + atan2(-3, -1), 2 * pi + atan2(-3, 1), 2 * pi + atan2(-1, 3)};
+int getType(double t) {
+    for(int i = 0; i < 8; ++i) {
+        if(t >= zone[7] || t <= zone[0]) return 0;
+        if(t >= zone[0] && t <= zone[1] ) return 1;
+        if(t >= zone[1] && t <= zone[2] ) return 2;
+        if(t >= zone[2] && t <= zone[3] ) return 3;
+        if(t >= zone[3] && t <= zone[4]) return 0;
+        if(t >= zone[4] && t <= zone[5]) return 1;
+        if(t >= zone[5] && t <= zone[6]) return 2;
+        if(t >= zone[6] && t <= zone[7]) return 3;
+    }
+    puts("你在秀nm呢");
+}
+double getVal(double *a, int i, int j, int col) {
+    return *(a + i * col + j);
+}
+void nonMaximumSuppression(Mat img, double *gradient) {
+    int col = img.cols, row = img.rows, Type;
+    for(int i = 0; i < row; ++i) {
+        for(int j = 0; j < col; ++j) {
+            switch(getType(getVal(gradient, i, j, col))) {
+                case 0:
+                    if(check(i, j - 1, row, col) && img.at<uchar>(i, j - 1) > img.at<uchar>(i, j)) {
+                        img.at<uchar>(i, j) = 0;
+                    }
+                    if(check(i, j + 1, row, col) && img.at<uchar>(i, j + 1) > img.at<uchar>(i, j)) {
+                        img.at<uchar>(i, j) = 0;
+                    }
+                    break;
+                case 1:
+                    if(check(i - 1, j + 1, row, col) && img.at<uchar>(i - 1, j + 1) > img.at<uchar>(i, j)) {
+                        img.at<uchar>(i, j) = 0;
+                    }
+                    if(check(i + 1, j - 1, row, col) && img.at<uchar>(i + 1, j - 1) > img.at<uchar>(i, j)) {
+                        img.at<uchar>(i, j) = 0;
+                    }
+                    break;
+                case 2:
+                    if(check(i - 1, j, row, col) && img.at<uchar>(i - 1, j) > img.at<uchar>(i, j)) {
+                        img.at<uchar>(i, j) = 0;
+                    }
+                    if(check(i + 1, j, row, col) && img.at<uchar>(i + 1, j) > img.at<uchar>(i, j)) {
+                        img.at<uchar>(i, j) = 0;
+                    }
+                    break;
+                case 3:
+                    if(check(i + 1, j + 1, row, col) && img.at<uchar>(i + 1, j + 1) > img.at<uchar>(i, j)) {
+                        img.at<uchar>(i, j) = 0;
+                    }
+                    if(check(i - 1, j - 1, row, col) && img.at<uchar>(i - 1, j - 1) > img.at<uchar>(i, j)) {
+                        img.at<uchar>(i, j) = 0;
+                    }
+                    break;
+            }
+        }
+    }
+}
 cv::Mat Combine(Mat &img1, Mat &img2) {
     int row = img1.rows, col = img2.cols;
     Mat img = Mat(row, col, CV_8U);
+    double gradient[row][col];
     for(int i = 0 ; i < row; ++i) {
         for(int j = 0; j < col; ++j) {
             int a = img1.at<uchar>(i, j), b = img2.at<uchar>(i, j);
             int temp = sqrt(a * a + b * b);
+            gradient[i][j] = atan2(b, a);
+            if(gradient[i][j] < 0) gradient[i][j] += 2 * pi;
             img.at<uchar>(i, j) = temp;
         }
     }
     cv::imshow("before", img);
-    imageBinaryzation(img, 100);
+    nonMaximumSuppression(img, &gradient[0][0]);
+    //imageBinaryzation(img, 100);
    // autoImageBinaryzation(img);
     return img;
 }
 cv::Mat filter(cv::Mat img) {
-    cv::imshow("236",img);
+  //  cv::imshow("236",img);
     cv::Mat imgl = filterlengthways(img);
-    cv::imshow("235",img);
+ //   cv::imshow("235",img);
     cv::Mat img2 = filtercrossways(img);
     cv::imshow("heng",img2);
     cv::imshow("zong",imgl);

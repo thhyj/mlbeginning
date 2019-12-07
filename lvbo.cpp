@@ -167,7 +167,7 @@ void nonMaximumSuppression(Mat img, vector<double>&gradient) {
         }
     }
 }
-const int lowTh = 75, highTh = 150;
+const int lowTh = 30, highTh = 90;
 inline bool lowthcheck(Mat &img, int i, int j, int row, int col) {
     return check(i, j, row, col) && img.at<uchar>(i, j) > highTh;
 }

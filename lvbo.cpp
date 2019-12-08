@@ -119,6 +119,7 @@ int getType(double t) {
         if(t >= zone[6] && t <= zone[7]) return 3;
     }
     puts("你在秀nm呢");
+    throw "你在秀nm呢";
 }
 int getNum(int i, int j, int col) {
     return i * col + j;
@@ -194,7 +195,7 @@ void doubleThresholdDetection(Mat &img1) {
                     lowthcheck(temp, i + 1, j, row, col) ||
                     lowthcheck(temp, i + 1, j + 1, row, col)
                     ) {
-                        temp.at<uchar>(i,j) *= 1.5;
+                        temp.at<uchar>(i,j) *= 1.5;//这里是瞎搞的
                         img1.at<uchar>(i,j) *= 1.5 ;
                         continue;
                     } else {
@@ -222,7 +223,7 @@ cv::Mat Combine(Mat &img1, Mat &img2) {
     }
     OutPut("beforenms", img);
     nonMaximumSuppression(img, gradient);
-    OutPut("beforedtd", img);
+   OutPut("beforedtd", img);
     doubleThresholdDetection(img);
     //imageBinaryzation(img, 100);
    // autoImageBinaryzation(img);
@@ -231,9 +232,9 @@ cv::Mat Combine(Mat &img1, Mat &img2) {
 
 cv::Mat filter(cv::Mat img) {
   //  cv::imshow("236",img);
-    cv::Mat imgl = filterlengthways(img);
+    cv::Mat imgl = filterlengthways(img);// 对竖直方向
  //   cv::imshow("235",img);
-    cv::Mat img2 = filtercrossways(img);
+    cv::Mat img2 = filtercrossways(img);//  对水平方向
     OutPut("heng",img2);
     OutPut("zong",imgl);
     return Combine(imgl, img2);

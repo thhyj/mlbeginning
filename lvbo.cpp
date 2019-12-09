@@ -168,7 +168,7 @@ void nonMaximumSuppression(Mat img, vector<double>&gradient) {
         }
     }
 }
-const int lowTh = 30, highTh = 90;
+const int lowTh = 75, highTh = 150;
 inline bool lowthcheck(Mat &img, int i, int j, int row, int col) {
     return check(i, j, row, col) && img.at<uchar>(i, j) > highTh;
 }
@@ -195,8 +195,8 @@ void doubleThresholdDetection(Mat &img1) {
                     lowthcheck(temp, i + 1, j, row, col) ||
                     lowthcheck(temp, i + 1, j + 1, row, col)
                     ) {
-                        temp.at<uchar>(i,j) *= 1.5;//这里是瞎搞的
-                        img1.at<uchar>(i,j) *= 1.5 ;
+                    //    temp.at<uchar>(i,j) *= 1.5;//这里是瞎搞的
+                    //    img1.at<uchar>(i,j) *= 1.5 ;
                         continue;
                     } else {
                         img1.at<uchar>(i, j) = 0;

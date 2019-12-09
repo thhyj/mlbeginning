@@ -1,8 +1,21 @@
 //
 // Created by 27689 on 2019/12/4.
 //
-
+//#include "Kernel.cpp"
 extern void OutPut(string name, cv::Mat &a);
+struct ConvolutionKernel {
+    int r, c;
+    vector<double> kernel;
+    ConvolutionKernel(int r = 0, int c = 0):r(r), c(c){
+
+    }
+};
+// 瞎写一时爽，重构火葬场
+ConvolutionKernel kernelSobelLengthway, kernelSobelCrossway;
+
+cv::Mat convolution(cv::Mat temp, int r, int c, vector<double> &kernel) {
+
+}
 cv::Mat filterlengthways(cv::Mat img1) {
     cv::Mat img;
     img1.copyTo(img);
@@ -22,10 +35,10 @@ cv::Mat filterlengthways(cv::Mat img1) {
         for(register int j = 1; j < col - 1; ++j) {
             int temp1 = 0;
             temp1 -= temp[i - 1][j - 1];
-            temp1 -= temp[i][j - 1] * 3;
+            temp1 -= temp[i][j - 1] * 2;
             temp1 -= temp[i + 1][j - 1];
             temp1 += temp[i - 1][j + 1];
-            temp1 += temp[i][j + 1] * 3;
+            temp1 += temp[i][j + 1] * 2;
             temp1 += temp[i + 1][j + 1];
             if(temp1 < 0) temp1 = -temp1;
             if(temp1 > 255) temp1 = 255;
@@ -52,10 +65,10 @@ cv::Mat filtercrossways(cv::Mat img1) {
         for(register int j = 1; j < col - 1; ++j) {
             int temp1 = 0;
             temp1 -= temp[i - 1][j - 1];
-            temp1 -= temp[i - 1][j] * 3;
+            temp1 -= temp[i - 1][j] * 2;
             temp1 -= temp[i - 1][j + 1];
             temp1 += temp[i + 1][j - 1];
-            temp1 += temp[i + 1][j] * 3;
+            temp1 += temp[i + 1][j] * 2;
             temp1 += temp[i + 1][j + 1];
             if(temp1 < 0) temp1 = -temp1;
             if(temp1 > 255) temp1 = 255;
@@ -168,7 +181,7 @@ void nonMaximumSuppression(Mat img, vector<double>&gradient) {
         }
     }
 }
-const int lowTh = 75, highTh = 150;
+const int lowTh = 50, highTh = 120;
 inline bool lowthcheck(Mat &img, int i, int j, int row, int col) {
     return check(i, j, row, col) && img.at<uchar>(i, j) > highTh;
 }

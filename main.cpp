@@ -1,12 +1,14 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <random>
+#include <dir.h>
 #include "cv.h"
 #include "sensor.cpp"
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 using namespace std;
 using namespace cv;
+string Name;
 void gInt(int &v) {
     static char ch;
     bool p = 0;
@@ -25,8 +27,11 @@ inline void shuchu() {
     puts("233");
 }
 void OutPut(string name, cv::Mat &a) {
-    namedWindow(name, WINDOW_NORMAL);
+    namedWindow(name, WINDOW_AUTOSIZE);
     cv::imshow(name, a);
+    //string Name = "fruit";
+    cv::imwrite(Name + "/out" + name + ".jpg", a);
+   // cv::imwrite("fruit/out" + name + ".jpg", a);
 }
 int main() {
     edgedetection();

@@ -3,18 +3,42 @@
 //
 //#include "Kernel.cpp"
 extern void OutPut(string name, cv::Mat &a);
+int getNum(int i, int j, int col) {
+    return i * col + j;
+}
 struct ConvolutionKernel {
     int r, c;
     vector<double> kernel;
     ConvolutionKernel(int r = 0, int c = 0):r(r), c(c){
 
     }
+    InitLengthwayKernel() {
+        r = 3, c = 3;
+        kernel.resize(r * c);
+        kernel[getNum(0, 0, c)] = 1;
+        kernel[getNum(0, 1, c)] = 0;
+        kernel[getNum(0, 2, c)] = 1;
+
+        kernel[getNum(1, 0, c)] = 2;
+        kernel[getNum(1, 1, c)] = 0;
+        kernel[getNum(1, 2, c)] = 2;
+
+        kernel[getNum(2, 0, c)] = 1;
+        kernel[getNum(2, 1, c)] = 0;
+        kernel[getNum(2, 2, c)] = 1;
+    }
 };
 // 瞎写一时爽，重构火葬场
 ConvolutionKernel kernelSobelLengthway, kernelSobelCrossway;
 
 cv::Mat convolution(cv::Mat temp, int r, int c, vector<double> &kernel) {
-
+    cv::Mat gg = Mat(temp.rows - r / 2, temp.cols - c / 2, CV_8U);
+    int sum;
+    for(int i = 1; i < r - 1; ++i) {
+        for(int j = 1; j < c - 1; ++j) {
+            sum = 0;
+        }
+    }
 }
 cv::Mat filterlengthways(cv::Mat img1) {
     cv::Mat img;
@@ -134,9 +158,7 @@ int getType(double t) {
     puts("你在秀nm呢");
     throw "你在秀nm呢";
 }
-int getNum(int i, int j, int col) {
-    return i * col + j;
-}
+
 double getVal(double *a, int i, int j, int col) {
     return *(a + i * col + j);
 }

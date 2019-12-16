@@ -26,14 +26,12 @@ void gInt(int &v) {
 inline void shuchu() {
     puts("233");
 }
-void OutPut(string name, cv::Mat &a) {
-    namedWindow(name, WINDOW_AUTOSIZE);
-    cv::imshow(name, a);
-    //string Name = "fruit";
-    cv::imwrite(Name + "/out" + name + ".jpg", a);
-   // cv::imwrite("fruit/out" + name + ".jpg", a);
+void OutPut(string name, cv::Mat &a) {  //输出图像函数
+    namedWindow(name, WINDOW_AUTOSIZE); //图片显示自适应窗口大小
+    cv::imshow(name, a);                //显示图片
+    cv::imwrite(Name + "/out" + name + ".jpg", a);//输出图片到图片名的文件夹中
 }
 int main() {
-    edgedetection();
+    Edgedetection();//进行边缘检测
     return 0;
 }

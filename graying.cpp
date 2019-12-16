@@ -14,11 +14,7 @@ cv::Mat graying(cv::Mat img) {
             *p2 = (*p)[0] * 0.114 + (*p)[1] * 0.587 + (*p)[2] * 0.299;
             p2++;
             p++;
-         //   Vec3b &pix = *p++;//彩色图                             //pix指向内容
-         //   uchar &pix2 = *p2++;//灰度图                           //&pix指向地址
-         //   pix2 = pix[0] * 0.114 + pix[1] * 0.587 + pix[2] * 0.299;
         }
     }
-    //cv::imshow("cao", grayImg);
     return grayImg;
 }

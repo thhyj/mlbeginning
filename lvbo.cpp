@@ -4,6 +4,7 @@
 //#include "Kernel.cpp"
 extern void OutPut(string name, cv::Mat &a);
 void doubleThresholdDetection(Mat &img1);//双阈值检测
+void autoDoubleThresholdDetection(Mat &img1);
 int getNum(int i, int j, int col) {
     return i * col + j;
 }
@@ -73,13 +74,13 @@ cv::Mat filtercrossways(cv::Mat img1) {
     return img;
 }
 
-void imageBinaryzation(Mat img, int thresholdVal = 0) {                //尝试对边缘进行单固定阈值二值化，但效果不好
+void imageBinaryzation(Mat img, int thresholdVal = 0) {                //尝试对边缘进行单固定阈值，但效果不好
     Mat img1;
     img.copyTo(img1);
     Mat_<uchar>::iterator it1 = img1.begin<uchar>();
     Mat_<uchar>::iterator itend1 = img1.end<uchar>();
     for (; it1 != itend1; ++it1) {
-        (*it1) > thresholdVal ? (*it1) = 255 : (*it1) = 0;             //如果像素点灰度值大于阈值，灰度置为最大值，否则灰度置为0;
+        (*it1) > thresholdVal ? 0 : (*it1) = 0;             //如果像素点灰度值大于阈值，灰度不变，否则灰度置为0;
     }
     OutPut("Binaryzation", img1);
 }
@@ -234,44 +235,47 @@ void autoImageBinaryzation5(Mat img) { //阈值为列向相邻4格以及行向�
 
     OutPut("autoBinaryzation5dtd", img1);
 }
-void autoImageBinaryzation6(Mat img) { //阈值为列向相邻4格范围内三格三格求梯度以及行向4格范围内三格三格求梯度的几何平均值
+void autoImageBinaryzation6(Mat img) { //阈值为列向相邻阶梯状范围内三格三格求梯度以及行向阶梯状范围内三格三格求梯度的几何平均值
     int row = img.rows, col = img.cols;
     Mat img1;
     img.copyTo(img1);
-    int avercrossway, averlengthway, sumcrossway, sumlengthway, cntcrossway, cntlengthway, aver;
+    int averCrossWay, averLengthWay, sumCrossWay, sumLengthWay, cntCrossWay, cntLengthWay, aver;
     for(int j = 0; j < col; ++j) {
         for(int i = 0; i < row; ++i) {
-            sumcrossway = sumlengthway = cntcrossway = cntlengthway = 0;
+            sumCrossWay = sumLengthWay = cntCrossWay = cntLengthWay = 0;
             for(int k = -4; k <= 4; ++k) {
-                for(int g = -2; g < 2; ++g) {
+                for(int g = (k <= 1 ? -2 : ((k <= 3 ) ? -1 : 0))  ; g <= (k <= 1 ? 2 : ((k <=3) ? 1 : 0)); ++g) {
                     if(check(i + g, j + k, row, col)) {
-                        sumlengthway += img.at<uchar>(i + g, j + k);
-                        cntlengthway ++;
+                        sumLengthWay += img.at<uchar>(i + g, j + k) * (1 + (abs(k) >= 2));
+
+                        cntLengthWay += (1 + (abs(k) >= 2));
                     }
                     if(check(i + k, j + g, row, col)) {
-                        sumcrossway += img.at<uchar>(i + k, j + g);
-                        cntcrossway ++;
+                        sumCrossWay += img.at<uchar>(i + k, j + g) * (1 + (abs(k) >= 2));
+                        cntCrossWay += (1 + (abs(k) >= 2));
                     }
                 }
             }
-            averlengthway = sumlengthway / cntlengthway;
-            avercrossway = sumcrossway / cntcrossway;
-            aver = sqrt(avercrossway * avercrossway + averlengthway * averlengthway);
-            img1.at<uchar>(i, j) > aver * 0.9 ? 0 : img1.at<uchar>(i, j) = 0;
+            averLengthWay = sumLengthWay / cntLengthWay;
+            averCrossWay = sumCrossWay / cntCrossWay;
+            aver = sqrt(averCrossWay * averCrossWay + averLengthWay * averLengthWay);
+            img1.at<uchar>(i, j) > aver * 0.92 ? 0 : img1.at<uchar>(i, j) = 0;
         }
     }
     OutPut("autoBinaryzation6", img1);
+    //autoDoubleThresholdDetection(img1);
     doubleThresholdDetection(img1);
-
     OutPut("autoBinaryzation6dtd", img1);
 
     OutPut("myfilter", img1);
 }
+
 const double pi = acos(-1);
 const double zone[8] = {atan2(1, 3), atan2(3, 1), atan2(3, -1), atan2(1, -3),
                         2 * pi + atan2(-1, -3), 2 * pi + atan2(-3, -1), 2 * pi + atan2(-3, 1), 2 * pi + atan2(-1, 3)};
-
-int getType(double t) {
+//进行区域划分，实际上是4个，但为了编码方便，化成8个
+//注意之前求梯度方向时对atan2的结果都加上了2*pi
+int getType(double t) {//返回梯度方向所属区域
     for (int i = 0; i < 8; ++i) {
         if (t >= zone[7] || t <= zone[0]) return 0;
         if (t >= zone[0] && t <= zone[1]) return 1;
@@ -282,13 +286,9 @@ int getType(double t) {
         if (t >= zone[5] && t <= zone[6]) return 2;
         if (t >= zone[6] && t <= zone[7]) return 3;
     }
-    puts("你在秀nm呢");
-    throw "你在秀nm呢";
+    throw "error";
 }
 
-double getVal(double *a, int i, int j, int col) {
-    return *(a + i * col + j);
-}
 
 void nonMaximumSuppression(Mat img, vector<double> &gradient) {
     int col = img.cols, row = img.rows;
@@ -332,7 +332,7 @@ void nonMaximumSuppression(Mat img, vector<double> &gradient) {
     }
 }
 
-const int lowTh = 50, highTh = 120;
+const int lowTh = 50, highTh = 100;
 
 inline bool lowthcheck(Mat &img, int i, int j, int row, int col) {
     return check(i, j, row, col) && img.at<uchar>(i, j) > highTh;
@@ -361,6 +361,60 @@ void doubleThresholdDetection(Mat &img1) {
                         lowthcheck(temp, i + 1, j, row, col) ||
                         lowthcheck(temp, i + 1, j + 1, row, col)
                             ) {
+                        temp.at<uchar>(i, j) = highTh + 1;
+                        continue;
+                    } else {
+                        img1.at<uchar>(i, j) = 0;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void autoDoubleThresholdDetection(Mat &img1) {
+    int col = img1.cols, row = img1.rows;
+    cv::Mat temp;
+    img1.copyTo(temp);
+    int autoHighTh = 0, autoLowTh = 0;
+    vector<int>sumCol, sumRow;
+    sumCol.resize(col);
+    sumRow.resize(row);
+    for(int i = 0 ; i < row; ++i) {
+        sumRow[i] = 0;
+        for(int j = 0; j < col; ++j) {
+            sumRow[i] += temp.at<uchar>(i, j);
+        }
+    }
+    for(int j = 0 ; j < col; ++j) {
+        sumCol[j] = 0;
+        for(int i = 0; i < row; ++i) {
+            sumCol[j] += temp.at<uchar>(i, j);
+        }
+    }
+    for (int i = 0; i < row; ++i) {
+        for (int j = 0; j < col; ++j) {
+            autoHighTh = (sumCol[j] + sumRow[i]) / (row + col);
+            autoHighTh *= 2;
+            autoLowTh = autoHighTh / 2;
+            if (temp.at<uchar>(i, j) > autoHighTh) {
+                continue;
+            } else {
+                if (temp.at<uchar>(i, j) < autoLowTh) {
+                    img1.at<uchar>(i, j) = 0;
+                    continue;
+                } else {
+                    if (lowthcheck(temp, i - 1, j - 1, row, col) ||
+                        lowthcheck(temp, i - 1, j, row, col) ||
+                        lowthcheck(temp, i - 1, j + 1, row, col) ||
+                        lowthcheck(temp, i, j - 1, row, col) ||
+                        // lowthcheck(temp, i, j , row, col) ||
+                        lowthcheck(temp, i, j + 1, row, col) ||
+                        lowthcheck(temp, i + 1, j - 1, row, col) ||
+                        lowthcheck(temp, i + 1, j, row, col) ||
+                        lowthcheck(temp, i + 1, j + 1, row, col)
+                            ) {
+                        temp.at<uchar>(i, j) = autoHighTh + 1;
                         continue;
                     } else {
                         img1.at<uchar>(i, j) = 0;
@@ -374,9 +428,7 @@ void doubleThresholdDetection(Mat &img1) {
 cv::Mat Combine(Mat &img1, Mat &img2) {
     int row = img1.rows, col = img2.cols;
     Mat img = Mat(row, col, CV_8U);
-    //  vector<vector<double> > newOne(row, vector<int>(col, 0));
-    vector<double> gradient;//[col];
-    // double gradient[row][col];
+    vector<double> gradient;//求出梯度方向，并进行梯度方向的规范化
     for (int i = 0; i < row; ++i) {
         for (int j = 0; j < col; ++j) {
             int a = img1.at<uchar>(i, j), b = img2.at<uchar>(i, j);
@@ -386,6 +438,7 @@ cv::Mat Combine(Mat &img1, Mat &img2) {
             img.at<uchar>(i, j) = temp;
         }
     }
+
  //   autoImageBinaryzation1(img);
    // autoImageBinaryzation2(img);
     //autoImageBinaryzation3(img);
@@ -396,6 +449,7 @@ cv::Mat Combine(Mat &img1, Mat &img2) {
     OutPut("beforenms", img);
     nonMaximumSuppression(img, gradient);
     OutPut("beforedtd", img);
+    imageBinaryzation(img, 150);
     doubleThresholdDetection(img);
     //imageBinaryzation(img, 100);
     // autoImageBinaryzation(img);
@@ -404,9 +458,7 @@ cv::Mat Combine(Mat &img1, Mat &img2) {
 }
 
 cv::Mat filter(cv::Mat img) {
-    //  cv::imshow("236",img);
     cv::Mat imgl = filterlengthways(img);// 对竖直方向滤波
-    //   cv::imshow("235",img);
     cv::Mat img2 = filtercrossways(img);//  对水平方向滤波
     OutPut("heng", img2);               //  输出横向和纵向的滤波效果图
     OutPut("zong", imgl);
